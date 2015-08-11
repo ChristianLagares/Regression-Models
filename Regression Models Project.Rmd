@@ -1,0 +1,73 @@
+---
+title: "Regression Models Project"
+author: "Christian J. Lagares Nieves"
+output: html_document
+---
+
+##Executive summary:
+In this report we will look to evaluate the following question, does automatic transmission (among other variables) explain MPG in different car models?. In order to provide some light about this we will work employing the R package datasets. Within this package, we will summon the `mtcars` dataset that contains different car models characteristics. From this report, as we will son see, we can conclude that weight and cylinders are relevant and important variables and those characteristics, not transmission, explain MPG in different car models. For us to answer this question, we will use [ANOVA](https://www.calvin.edu/~scofield/courses/m145/materials/handouts/anova.pdf) which allows to determine if a variable can be dropped in a multivariated model. For aditional information on the Analysis of Variance Methodology please visit the following url <https://www.calvin.edu/~scofield/courses/m145/materials/handouts/anova1And2.pdf>. The information on ANOVA is made available to you through the [Calvin College, Grand Rapids, Michigan](http://www.calvin.edu).
+
+##1st Step: Load data and determine principal variables:
+* `datasets` library provides royalte-free databases
+* `mtcars` dataset provides information on a wide variety of car models and key characteristics. 
+
+```{r, results='hide'}
+library(datasets) #This library provides free databases
+data(mtcars) #The database I will use
+str(mtcars) #str displays variables names and displays basic information
+```
+There are several variables in this dataset. ANOVA (Analysis of Variance) will be used to determine whose variables are relevant apart from transmission type. I will proceed from general to particular, so I won't lose generality after dropping variables.
+
+##ANOVA
+ANOVA explains the sources of variance so it can help to determine which variables have significant effects. According to [Wikipedia](https://en.wikipedia.org/wiki/Analysis_of_variance): "In its simplest form, ANOVA provides a statistical test of whether or not the means of several groups are equal".
+```{r}
+analysis <- aov(mpg ~ ., data = mtcars) #I run ANOVA
+summary(analysis) #this returns a summary containing relevant statistics
+```
+This analysis suggest I have to include CYL, DISP and WT within a linear model as those are significant variables. 
+
+##2nd Step: Model's specification
+I considered the following model (Details and specific numbers are provided at the end of the document) as I need to determine transmission and significant varibles effects over MPG:
+```{r}
+lm <- lm(mpg ~ cyl + wt + am, data = mtcars)
+summary(lm)
+```
+AM is *not significant* and has *a large p-value*, but it is not possible to reject the hypothesis that the coefficient of AM is 0.
+
+##3rd step: Box plot and residual plots
+Automatic transmission versus manual transmission related to MPG (the question is to determine is transmission is a relevant variable to explain MPG). 
+The residual is the difference between the observed data of the dependent variable $MPG$ and the fitted values $\widehat{MPG}$.
+````{r}
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+par(mfrow=c(3,2))
+par(mar=c(2.5, 5.5, 1.5, 1.5))
+boxplot(mpg ~ am, data = mtcars, xlab = "AM (Transmission type)", 
+        ylab = "MPG (Miles per galon)", main="Boxplot", xaxt="n", col=c("red","blue"))
+axis(1, at=c(1,2), labels=c("automatic", "manual"))
+par(mar=c(2.5, 5.5, 1.5, 1.5))
+plot(lm)
+```
+
+As the boxes in the plot do not superpose it means automatic and manual cars are different. 
+
+##4th: Conclusion
+AM, WT and CYL are relevant variables that explain MPG. The $R^2$ is 0.83 so the model has a *desirable goodness* of fit and we can explain MPG related to the model's variables. AM by its own cannot explain MPG but is an important variable that explains (partially) car's performance.
+
+\newpage
+
+##APPENDIX: Descriptive statistics
+In order to obtain an idea of how to proceed I considered the statistical momentums (mean, median, quartiles and variance-covariance matrix)
+
+````{r, tidy=TRUE}
+summary(mtcars) #mean, median and quatiles
+var(mtcars) #variance-covariance matrix
+```
+
+##APPENDIX: Model specification
+If I take this model direct from ANOVA data:
+```{r,tidy=TRUE}
+lm <- lm(mpg ~ cyl + disp + wt + am, data = mtcars)
+summary(lm)
+```
+Then DISP is not significant, so there is evidence that the model can be improved by dropping variables as it is done with the final specification considered in this report.
